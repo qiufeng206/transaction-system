@@ -1,0 +1,27 @@
+{
+  "simulation": "com.transaction.performance.TransactionSimulation",
+  "simulationId": "transactionsimulation-20250301112504141",
+  "start": 1740828306096,
+  "description": "",
+  "scenarios": ["Create Transaction Stress Test", "Mixed Load Test", "Delete Transaction Stress Test"],
+  "assertions": [
+{
+  "path": "Global",
+  "target": "max of response time",
+  "condition": "is less than",
+  "expectedValues": [1500.0],
+  "result": true,
+  "message": "Global: max of response time is less than 1500.0",
+  "actualValue": [232.0]
+},
+{
+  "path": "Global",
+  "target": "percentage of successful events",
+  "condition": "is greater than",
+  "expectedValues": [95.0],
+  "result": true,
+  "message": "Global: percentage of successful events is greater than 95.0",
+  "actualValue": [100.0]
+}
+  ]
+}

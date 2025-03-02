@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TransactionService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">transaction-system</a> &gt; <a href="index.source.html" class="el_package">com.transaction.service</a> &gt; <span class="el_source">TransactionService.java</span></div><h1>TransactionService.java</h1><pre class="source lang-java linenums">package com.transaction.service;
+
+import com.transaction.config.CacheConfig;
+import com.transaction.model.Transaction;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import com.transaction.exception.DuplicateTransactionException;
+import com.transaction.exception.TransactionNotFoundException;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+
+@Service
+public class TransactionService {
+<span class="fc" id="L23">    private final ConcurrentHashMap&lt;String, Transaction&gt; transactions = new ConcurrentHashMap&lt;&gt;();</span>
+
+    private final CacheManager cacheManager; // 新增字段
+
+    // 通过构造函数注入 CacheManager
+<span class="fc" id="L28">    public TransactionService(CacheManager cacheManager) {</span>
+<span class="fc" id="L29">        this.cacheManager = cacheManager;</span>
+<span class="fc" id="L30">    }</span>
+
+    // 添加交易（带重复校验）
+    public Transaction create(Transaction transaction) {
+<span class="fc bfc" id="L34" title="All 2 branches covered.">        if (transactions.containsKey(transaction.getId())) {</span>
+<span class="fc" id="L35">            throw new DuplicateTransactionException(&quot;Transaction ID重复: &quot; + transaction.getId());</span>
+        }
+<span class="fc" id="L37">        transactions.put(transaction.getId(), transaction);</span>
+        //Objects.requireNonNull(cacheManager.getCache(CacheConfig.TRANSACTION_CACHE_NAME)).clear();
+<span class="fc" id="L39">        return transaction;</span>
+    }
+
+    // 分页查询（带缓存）
+    @Cacheable(value = CacheConfig.TRANSACTION_CACHE_NAME, key = &quot;#pageable.pageNumber +'-'+ #pageable.pageSize&quot;)
+    public Page&lt;Transaction&gt; listAll(Pageable pageable) {
+<span class="fc" id="L45">        List&lt;Transaction&gt; list = new ArrayList&lt;&gt;(transactions.values());</span>
+<span class="fc" id="L46">        int start = (int) pageable.getOffset();</span>
+<span class="fc" id="L47">        int end = Math.min((start + pageable.getPageSize()), list.size());</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">        return new PageImpl&lt;&gt;(list.size() &gt; start ? list.subList(start, end) : list, pageable, list.size());</span>
+    }
+
+    // 删除交易
+    @CacheEvict(value = CacheConfig.TRANSACTION_CACHE_NAME, key = &quot;#id&quot;)
+    public void delete(String id) {
+<span class="fc bfc" id="L54" title="All 2 branches covered.">        if (!transactions.containsKey(id)) {</span>
+<span class="fc" id="L55">            throw new TransactionNotFoundException(&quot;交易不存在: &quot; + id);</span>
+        }
+<span class="fc" id="L57">        transactions.remove(id);</span>
+        //Objects.requireNonNull(cacheManager.getCache(CacheConfig.TRANSACTION_CACHE_NAME)).clear();
+<span class="fc" id="L59">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
