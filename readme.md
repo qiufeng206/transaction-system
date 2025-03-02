@@ -24,3 +24,5 @@
    docker logs -f transaction-service
    预期输出：
    Started TransactionApplication in 3.161 seconds (process running for 4.13)
+
+说明：由于docker镜像内置的maven默认的Mvaven仓库地址拉取依赖很慢，经常超时导致构建失败，所以在dockerfile里面 将本地配置了阿里云仓库的setting文件拷贝了进去，如果使用人员用的是内部网络，影响了构建，可以将dockerfile里面的这句 命令删除: COPY setting.xml /root/.m2/settings.xml
